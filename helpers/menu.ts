@@ -77,10 +77,10 @@ export const pause = async () => {
     await inquirer.prompt(question);
 }
 
-export const accountList = async ( accounts: Account[] ) => {
+export const accountList = async ( accounts: Account[], idExclude: string = '') => {
 
     try {
-        const choices = accounts.map(account => {
+        const choices = accounts.filter(account => account.id !== idExclude).map(account => {
             return {
                 value: account.id,
                 name: account.name

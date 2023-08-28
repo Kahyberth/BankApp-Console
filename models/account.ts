@@ -19,7 +19,10 @@ export class Account {
     }
 
     checkBalance() {
-        console.log(`Account balance is ${this.balance}`);
+        return {
+            name: this.name,
+            balance: this.balance,
+        }
     }
 
     toString() {

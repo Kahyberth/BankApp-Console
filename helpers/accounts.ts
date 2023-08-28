@@ -55,11 +55,11 @@ export class Accounts {
     }
 
     checkBalance(id: string) {
-        this.addAccount().forEach(account => {
-            if (account.id === id) {
-                console.log(account.balance);
-            }
-        });
+        const account = this.addAccount().find(account => account.id === id);
+        if (!account) {
+            throw new Error('Account not found');
+        }
+        console.log(account.checkBalance());
     }
 
     

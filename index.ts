@@ -42,7 +42,7 @@ const main = async () => {
             break;
             case '5':
                 const userId = await accountList($accounts.addAccount());
-                const recipientId = await accountList($accounts.addAccount());
+                const recipientId = await accountList($accounts.addAccount(), userId);
                 const amount = await input('Enter the amount to transfer: ');
                 $accounts.transfer(Number(amount), userId, recipientId);
                 console.log('Transfer completed'.green);
