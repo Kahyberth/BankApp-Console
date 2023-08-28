@@ -1,12 +1,16 @@
 import { accountList, input, menu, pause } from "./helpers/menu";
 import { Accounts } from "./helpers/accounts";
-import { Account } from "./models/account";
+import { readDB, saveDB } from "./models/save";
 
 
 
 const main = async () => {
     let opt = '';
+    const accountsDB = readDB();
     const $accounts = new Accounts();
+    if ( accountsDB !== null ) {
+        $accounts.loadData(accountsDB);
+    }
     do {
         opt = await menu();
         switch (opt) {
@@ -58,6 +62,7 @@ const main = async () => {
             break;
 
         }
+        saveDB($accounts.addAccount());
         await pause();
     } while(opt !== '0');
 }

@@ -1,4 +1,4 @@
-import { Account } from "../models/account";
+import { Account } from '../models/account';
 
 interface Transaction {
     sender: { name: string; id: string };
@@ -37,7 +37,7 @@ export class Accounts {
     deposit(amount: number, id: string) {
         this.addAccount().forEach(account => {
             if (account.id === id) {
-                account.deposit(amount);
+                account.balance += amount;
             }
         });
     }
@@ -49,7 +49,7 @@ export class Accounts {
                     console.log("Insufficient funds");
                     return;
                 }
-                account.withdraw(amount);
+                account.balance -= amount;
             }
         });
     }
@@ -59,7 +59,7 @@ export class Accounts {
         if (!account) {
             throw new Error('Account not found');
         }
-        console.log(account.checkBalance());
+        console.log(account);
     }
 
     
@@ -74,9 +74,9 @@ export class Accounts {
         if ( amount > userData.balance ) {
             throw new Error('Insufficient funds');
         }
-        userData.withdraw(amount);
+        userData.balance -= amount;
 
-        recipientData.deposit(amount);
+        recipientData.balance += amount;
         const info = {
             sender: {
                 name: userData.name,
@@ -106,4 +106,11 @@ export class Accounts {
     checkTransactions(id: string) {
         return this.historyTransactions[id];
     }
+
+    loadData(data: Record<string, Account> = {}) {
+        Object.values(data).forEach(info => {
+            this.listAccounts[info.id] = info;
+        });
+    }
+    
 }
