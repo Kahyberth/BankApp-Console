@@ -23,9 +23,28 @@ export class Accounts {
 
 
     _listAccounts () {
+        const account = this.addAccount().map(account => account.toString());
+        return account;
+    }
+
+    deposit(amount: number, id: string) {
         this.addAccount().forEach(account => {
-            console.log(account.toString());
-        })
+            if (account.id === id) {
+                account.deposit(amount);
+            }
+        });
+    }
+
+    withdraw(amount: number, id: string) {
+        this.addAccount().forEach(account => {
+            if (account.id === id) {
+                if (amount > account.balance) {
+                    console.log("Insufficient funds");
+                    return;
+                }
+                account.withdraw(amount);
+            }
+        });
     }
 
     

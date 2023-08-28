@@ -1,5 +1,6 @@
 import 'colors';
 import inquirer from 'inquirer';
+import { Account } from '../models/account';
 
 export const menu = async () => {
     //console.clear();
@@ -61,4 +62,43 @@ export const input = async ( message: string ) => {
     ];
     const { desc } = await inquirer.prompt(question);
     return desc;
+}
+
+
+export const pause = async () => {
+    const question = [
+        {
+            type: 'input',
+            name: 'enter',
+            message: `Press ${'ENTER'.green} to continue`,
+        }
+    ];
+    console.log('\n');
+    await inquirer.prompt(question);
+}
+
+export const accountList = async ( accounts: Account[] ) => {
+
+    try {
+        const choices = accounts.map(account => {
+            return {
+                value: account.id,
+                name: account.name
+            }
+        });
+
+        const opt = await inquirer.prompt([
+            {
+                type: 'list',
+                name: 'option',
+                message: 'Select an account',
+                choices
+            }
+        ]);
+
+        return opt.option;
+    }
+    catch (err) {
+        console.log(err);
+    }
 }

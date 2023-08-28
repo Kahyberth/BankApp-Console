@@ -1,10 +1,13 @@
+import { v4 as uuidv4 } from 'uuid';
+
 export class Account {
-    
     name: string;
     balance: number;
+    id: string;
     constructor(name: string, balance: number) {
         this.name = name;
         this.balance = balance;
+        this.id = uuidv4();
     }
 
     deposit(amount: number) {
@@ -20,7 +23,11 @@ export class Account {
     }
 
     toString() {
-        return `${this.name} account balance is ${this.balance}`;
+        return {
+            name: this.name,
+            balance: this.balance,
+            id: this.id
+        }
     }
 
     transfer(amount: number, account: Account) {

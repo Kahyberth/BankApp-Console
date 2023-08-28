@@ -1,5 +1,6 @@
-import { input, menu } from "./helpers/menu";
+import { accountList, input, menu, pause } from "./helpers/menu";
 import { Accounts } from "./helpers/accounts";
+import { Account } from "./models/account";
 
 
 
@@ -17,11 +18,31 @@ const main = async () => {
                 } 
                 $accounts.createAccount(name, Number(balance));
             break;
+            case '2':
+                const depositAmount = await input('Enter the amount to deposit: ');
+                if ( !depositAmount ) {
+                    throw new Error('Amount is required'.green);
+                }
+                const depositId = await accountList($accounts.addAccount());
+                $accounts.deposit(Number(depositAmount), depositId);
+                console.log('Deposit completed'.green);
+            break;
+            case '3':
+                const withdrawAmount = await input('Enter the amount to withdraw: ');
+                if ( !withdrawAmount ) {
+                    throw new Error('Amount is required'.green);
+                }
+                const withdrawId = await accountList($accounts.addAccount());
+                $accounts.withdraw(Number(withdrawAmount), withdrawId);
+                console.log('Withdraw completed'.green);
+            break;
             case '7':
-                console.log($accounts._listAccounts());
+                const list = $accounts._listAccounts();
+                console.log(list);
             break;
 
         }
+        await pause();
     } while(opt !== '0');
 }
 
