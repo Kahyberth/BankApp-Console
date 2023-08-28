@@ -47,6 +47,11 @@ const main = async () => {
                 $accounts.transfer(Number(amount), userId, recipientId);
                 console.log('Transfer completed'.green);
                 break;
+            case '6':
+                const checkTransactionsId = await accountList($accounts.addAccount());
+                const transferInformation = $accounts.checkTransactions(checkTransactionsId);
+                console.log(transferInformation);
+                break;
             case '7':
                 const list = $accounts._listAccounts();
                 console.log(list);
