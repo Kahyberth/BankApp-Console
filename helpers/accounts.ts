@@ -47,7 +47,27 @@ export class Accounts {
         });
     }
 
-    
+    checkBalance(id: string) {
+        this.addAccount().forEach(account => {
+            if (account.id === id) {
+                console.log(account.balance);
+            }
+        });
+    }
 
+    
+    transfer(amount: number ,userId: string, recipientId: string) {
+        const user = this.addAccount();
+        const userData = user.find(account => account.id === userId);
+        const recipientData = user.find(account => account.id === recipientId);
+        if ( !userData || !recipientData) {
+            throw new Error('User not found');
+        } 
+        if ( amount > userData.balance ) {
+            throw new Error('Insufficient funds');
+        }
+        userData.withdraw(amount);
+        recipientData.deposit(amount);
+    }
 
 }

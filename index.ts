@@ -36,6 +36,17 @@ const main = async () => {
                 $accounts.withdraw(Number(withdrawAmount), withdrawId);
                 console.log('Withdraw completed'.green);
             break;
+            case '4':
+                const checkBalanceId = await accountList($accounts.addAccount());
+                $accounts.checkBalance(checkBalanceId);
+            break;
+            case '5':
+                const userId = await accountList($accounts.addAccount());
+                const recipientId = await accountList($accounts.addAccount());
+                const amount = await input('Enter the amount to transfer: ');
+                $accounts.transfer(Number(amount), userId, recipientId);
+                console.log('Transfer completed'.green);
+                break;
             case '7':
                 const list = $accounts._listAccounts();
                 console.log(list);
