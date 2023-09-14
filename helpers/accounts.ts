@@ -1,3 +1,4 @@
+import { prisma } from '../db/db';
 import { Account } from '../models/account';
 
 interface Transaction {
@@ -14,103 +15,149 @@ export class Accounts {
         this.historyTransactions = {};
     }
 
-    addAccount() {
-        const list: Account[] = [];
-        Object.keys(this.listAccounts).forEach((key) => {
-                const newAccount  = this.listAccounts[key];
-                list.push(newAccount);
-        });
-        return list;
-    }
-
-    createAccount(name: string, balance: number) {
+    async createAccount(name: string, balance: number) {
         const newAccount = new Account(name, balance);
-        this.listAccounts[newAccount.name] = newAccount;
+        const account = await prisma.user.create({
+            data: {
+                name: newAccount.name,
+                balance: newAccount.balance,
+                id: newAccount.id
+            }
+        });
     }
 
-
-    _listAccounts () {
-        const account = this.addAccount().map(account => account.toString());
+    async _listAccounts () {
+        const account = prisma.user.findMany();
         return account;
     }
 
-    deposit(amount: number, id: string) {
-        this.addAccount().forEach(account => {
-            if (account.id === id) {
-                account.balance += amount;
-            }
-        });
-    }
-
-    withdraw(amount: number, id: string) {
-        this.addAccount().forEach(account => {
-            if (account.id === id) {
-                if (amount > account.balance) {
-                    console.log("Insufficient funds");
-                    return;
+    async deposit(amount: number, id: string) {
+        try {
+            const account = await prisma.user.findUnique({
+                where: {
+                    id: id
                 }
-                account.balance -= amount;
+            })
+            if (!account) {
+                throw new Error('Account not found');
             }
-        });
+            account.balance += amount;
+            return await prisma.user.update({
+                where: {
+                    id: id
+                },
+                data: {
+                    balance: account.balance
+                }
+            })
+        } catch ( error ) {
+            return error;
+        }
     }
 
-    checkBalance(id: string) {
-        const account = this.addAccount().find(account => account.id === id);
-        if (!account) {
-            throw new Error('Account not found');
+    async withdraw(amount: number, id: string) {
+        try {
+            const account = await prisma.user.findMany({
+                where: {
+                    id: id
+                }
+            })
+            if (!account) {
+                throw new Error('Account not found');
+            }
+
+            if (account[0].balance < amount) {
+                throw new Error('Insufficient funds');
+            }
+            
+            await prisma.user.update({
+                where: { id },
+                data: {
+                  balance: account[0].balance -= amount
+                },
+              });
+
+        console.log("Withdraw completed".green);
+        } catch ( error ) {
+            return error;
         }
-        console.log(account);
+    }
+
+    async checkBalance(id: string) {
+       const account = await prisma.user.findMany({
+            where: {id}
+       });
+        console.log("\n");
+        console.log("Your balance is: ".green, account[0].balance);
     }
 
     
-    transfer(amount: number ,userId: string, recipientId: string) {
-        const user = this.addAccount();
-        const userData = user.find(account => account.id === userId);
-        const recipientData = user.find(account => account.id === recipientId);
-        if ( !userData || !recipientData) {
-            throw new Error('User not found');
-        } 
-        
-        if ( amount > userData.balance ) {
-            throw new Error('Insufficient funds');
-        }
-        userData.balance -= amount;
-
-        recipientData.balance += amount;
-        const info = {
-            sender: {
-                name: userData.name,
-                id: userData.id
-            },
-            recipient: {
-                name: recipientData.name,
-                id: recipientData.id
-            },
-            amount: {
-                amount,
-                date: new Date().toISOString()
+    async transfer(amount: number ,userId: string, recipientId: string) {
+        try {
+            const accounts = await prisma.user.findMany({
+                where: {
+                    id: { in: [userId, recipientId] }
+                }
+            });
+            if (!accounts) {
+                throw new Error('Account not found');
             }
+    
+            if (accounts[0].balance < amount) {
+                throw new Error('Insufficient funds');
+            }
+
+            const check = await prisma.transaction.create({
+                data: {
+                    senderId: userId,
+                    name: accounts[0].name,
+                    sender: accounts[1].name,
+                    amount
+                }
+            })
+
+            if (!check) {
+                throw new Error('Error in transaction');
+            }
+
+            await prisma.user.update({
+                where: { id: userId },
+                data: {
+                    balance: accounts[0].balance -= amount
+                },
+            });
+
+            await prisma.user.update({
+                where: { id: recipientId },
+                data: {
+                    balance: accounts[1].balance += amount
+                },
+            })
+            console.log("Transfer completed".green);
+        } catch(error) {
+            return error;
         }
 
-        if (!this.historyTransactions[userData.id]) {
-            this.historyTransactions[userData.id] = [];
-            this.historyTransactions[recipientData.id] = [];
-        }
-
-        this.historyTransactions[userData.id].push(info);
-        this.historyTransactions[recipientData.id].push(info);
-
-        return info;
     }
 
-    checkTransactions(id: string) {
-        return this.historyTransactions[id];
+    async checkTransactions(id: string) {
+        const transactions = await prisma.transaction.findMany({
+            where: {
+              senderId: id,        
+            }
+        })
+        return transactions;
     }
 
-    loadData(data: Record<string, Account> = {}) {
-        Object.values(data).forEach(info => {
-            this.listAccounts[info.id] = info;
+    async loadData() {
+        const data = await prisma.user.findMany({
+            select: {
+                name: true,
+                balance: true,
+                id: true
+            }
         });
+        return data;
     }
     
 }

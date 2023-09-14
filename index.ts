@@ -1,16 +1,12 @@
 import { accountList, input, menu, pause } from "./helpers/menu";
 import { Accounts } from "./helpers/accounts";
-import { readDB, saveDB } from "./models/save";
 
 
 
 const main = async () => {
     let opt = '';
-    const accountsDB = readDB();
     const $accounts = new Accounts();
-    if ( accountsDB !== null ) {
-        $accounts.loadData(accountsDB);
-    }
+    const loadAccounts = await $accounts.loadData();
     do {
         opt = await menu();
         switch (opt) {
@@ -27,7 +23,7 @@ const main = async () => {
                 if ( !depositAmount ) {
                     throw new Error('Amount is required'.green);
                 }
-                const depositId = await accountList($accounts.addAccount());
+                const depositId = await accountList(loadAccounts);
                 $accounts.deposit(Number(depositAmount), depositId);
                 console.log('Deposit completed'.green);
             break;
@@ -36,33 +32,32 @@ const main = async () => {
                 if ( !withdrawAmount ) {
                     throw new Error('Amount is required'.green);
                 }
-                const withdrawId = await accountList($accounts.addAccount());
+                const withdrawId = await accountList(loadAccounts);
                 $accounts.withdraw(Number(withdrawAmount), withdrawId);
                 console.log('Withdraw completed'.green);
             break;
             case '4':
-                const checkBalanceId = await accountList($accounts.addAccount());
+                const checkBalanceId = await accountList(loadAccounts);
                 $accounts.checkBalance(checkBalanceId);
             break;
             case '5':
-                const userId = await accountList($accounts.addAccount());
-                const recipientId = await accountList($accounts.addAccount(), userId);
+                const userId = await accountList(loadAccounts);
+                const recipientId = await accountList(loadAccounts, userId);
                 const amount = await input('Enter the amount to transfer: ');
                 $accounts.transfer(Number(amount), userId, recipientId);
                 console.log('Transfer completed'.green);
                 break;
             case '6':
-                const checkTransactionsId = await accountList($accounts.addAccount());
-                const transferInformation = $accounts.checkTransactions(checkTransactionsId);
+                const checkTransactionsId = await accountList(loadAccounts);
+                const transferInformation = await $accounts.checkTransactions(checkTransactionsId);
                 console.log(transferInformation);
                 break;
             case '7':
-                const list = $accounts._listAccounts();
-                console.log(list);
+                console.log(loadAccounts);
             break;
 
         }
-        saveDB($accounts.addAccount());
+        
         await pause();
     } while(opt !== '0');
 }
