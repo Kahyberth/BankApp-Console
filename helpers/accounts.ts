@@ -1,4 +1,4 @@
-import { prisma } from '../db/db';
+import { $checkBalance, $checkTransactions, $deposit, $listAccounts, $loadData, $transfer, $withdraw, createUser } from '../db/queries';
 import { Account } from '../models/account';
 
 interface Transaction {
@@ -8,156 +8,78 @@ interface Transaction {
 }
 export class Accounts {
     
-    listAccounts: Record<string, Account> = {};
-    historyTransactions: Record<string, Transaction[]> = {};
     constructor () {
-        this.listAccounts = {};
-        this.historyTransactions = {};
+        this.loadData();
     }
-
+    /**
+     * 
+     * @param name 
+     * @param balance 
+     * @returns 
+     */
     async createAccount(name: string, balance: number) {
-        const newAccount = new Account(name, balance);
-        const account = await prisma.user.create({
-            data: {
-                name: newAccount.name,
-                balance: newAccount.balance,
-                id: newAccount.id
-            }
-        });
+        return await createUser(new Account(name, balance));
     }
 
+
+    /**
+     * 
+     * @returns $listAccounts() A list of all created accounts
+     */
     async _listAccounts () {
-        const account = prisma.user.findMany();
-        return account;
+        return $listAccounts();
     }
+
+    /**
+     * 
+     * @param amount Amount of money to be deposited
+     * @param id Id of the user to whom the deposit will be made
+     */
 
     async deposit(amount: number, id: string) {
-        try {
-            const account = await prisma.user.findUnique({
-                where: {
-                    id: id
-                }
-            })
-            if (!account) {
-                throw new Error('Account not found');
-            }
-            account.balance += amount;
-            return await prisma.user.update({
-                where: {
-                    id: id
-                },
-                data: {
-                    balance: account.balance
-                }
-            })
-        } catch ( error ) {
-            return error;
-        }
+        $deposit(amount, id);
     }
+
+    /**
+     * 
+     * @param amount Amount of money to be withdrawn
+     * @param id Id of the user to whom the money is to be withdrawn
+     */
 
     async withdraw(amount: number, id: string) {
-        try {
-            const account = await prisma.user.findMany({
-                where: {
-                    id: id
-                }
-            })
-            if (!account) {
-                throw new Error('Account not found');
-            }
-
-            if (account[0].balance < amount) {
-                throw new Error('Insufficient funds');
-            }
-            
-            await prisma.user.update({
-                where: { id },
-                data: {
-                  balance: account[0].balance -= amount
-                },
-              });
-
-        console.log("Withdraw completed".green);
-        } catch ( error ) {
-            return error;
-        }
+        $withdraw(amount, id);
     }
 
+    /**
+     * This function returns the amount of money that the person has. 
+     * @param id Id of the person to whom the money will be reviewed
+     */
     async checkBalance(id: string) {
-       const account = await prisma.user.findMany({
-            where: {id}
-       });
-        console.log("\n");
-        console.log("Your balance is: ".green, account[0].balance);
+       $checkBalance(id);
     }
 
-    
+    /**
+     * 
+     * @param amount Amount of money to be transferred
+     * @param userId Money sender id
+     * @param recipientId id of the recipient of the money
+     */
     async transfer(amount: number ,userId: string, recipientId: string) {
-        try {
-            const accounts = await prisma.user.findMany({
-                where: {
-                    id: { in: [userId, recipientId] }
-                }
-            });
-            if (!accounts) {
-                throw new Error('Account not found');
-            }
-    
-            if (accounts[0].balance < amount) {
-                throw new Error('Insufficient funds');
-            }
-
-            const check = await prisma.transaction.create({
-                data: {
-                    senderId: userId,
-                    name: accounts[0].name,
-                    sender: accounts[1].name,
-                    amount
-                }
-            })
-
-            if (!check) {
-                throw new Error('Error in transaction');
-            }
-
-            await prisma.user.update({
-                where: { id: userId },
-                data: {
-                    balance: accounts[0].balance -= amount
-                },
-            });
-
-            await prisma.user.update({
-                where: { id: recipientId },
-                data: {
-                    balance: accounts[1].balance += amount
-                },
-            })
-            console.log("Transfer completed".green);
-        } catch(error) {
-            return error;
-        }
-
+        $transfer(amount, userId, recipientId);
     }
-
+    /**
+     * 
+     * @param id Reviews the transactions that a person has made, by means of his or her id.
+     */
     async checkTransactions(id: string) {
-        const transactions = await prisma.transaction.findMany({
-            where: {
-              senderId: id,        
-            }
-        })
-        return transactions;
+        $checkTransactions(id);
     }
 
+    /**
+     * Load data to the menu 
+     */
     async loadData() {
-        const data = await prisma.user.findMany({
-            select: {
-                name: true,
-                balance: true,
-                id: true
-            }
-        });
-        return data;
+        return await $loadData();
     }
     
 }
